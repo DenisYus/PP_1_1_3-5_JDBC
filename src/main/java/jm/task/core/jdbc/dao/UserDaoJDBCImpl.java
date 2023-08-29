@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoJDBCImpl extends Util implements UserDao  {
-    Connection connection = getConnection();
+    private final Connection connection = getConnection();
 
     public UserDaoJDBCImpl() {
 
@@ -21,8 +21,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao  {
 
     public void createUsersTable() {
         try (Statement statement = connection.createStatement()) {
-
-            ((Statement) statement).executeUpdate("CREATE TABLE IF NOT EXISTS User " +
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS User " +
                     "(id BIGINT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255), lastName VARCHAR(255), age INT)");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -37,7 +36,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao  {
         }
     }
 
-    public void saveUser(String name, String lastName, byte age) {
+    public void saveUser(String name, String lastName, byte age) throws SQLException  {
         PreparedStatement preparedStatement = null;
         try {
             connection.setAutoCommit(false);
@@ -48,22 +47,27 @@ public class UserDaoJDBCImpl extends Util implements UserDao  {
             preparedStatement.execute();
             System.out.println("Пользователь с именем " + name + " добавлен в базу данных.");
             connection.commit();
-            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            System.out.println("Какашка");
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+
         }
     }
 
-    public void removeUserById(long id) {
+
+    public void removeUserById(long id) throws SQLException {
         try {
             connection.setAutoCommit(false);
             PreparedStatement pst = connection.prepareStatement("DELETE FROM User WHERE id = ?");
             pst.setLong(1, id);
             pst.executeUpdate();
             connection.commit();
-            connection.setAutoCommit(true);
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
         }
     }
 
@@ -90,15 +94,18 @@ public class UserDaoJDBCImpl extends Util implements UserDao  {
         return userList;
     }
 
-    public void cleanUsersTable() {
+    public void cleanUsersTable() throws SQLException {
         try {
             connection.setAutoCommit(false);
             Statement statement = connection.createStatement();
             statement.executeUpdate("TRUNCATE TABLE User");
             connection.commit();
-            connection.setAutoCommit(true);
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+
         }
     }
 }
