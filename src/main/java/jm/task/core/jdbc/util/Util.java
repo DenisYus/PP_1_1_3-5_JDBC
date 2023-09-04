@@ -13,7 +13,7 @@ import org.hibernate.service.ServiceRegistry;
 
 public class Util {
     private static SessionFactory sessionFactory;
-    protected static SessionFactory getSessionFactory() {
+    public static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
             try {
                 Configuration configuration = new Configuration();
